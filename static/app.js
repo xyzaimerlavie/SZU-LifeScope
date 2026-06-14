@@ -41,22 +41,29 @@ const INTENT_OPTIONS = {
   ktv: {
     label: "KTV",
     categories: ["leisure"],
-    keywords: ["KTV", "ktv", "唱", "歌", "音乐"],
+    keywords: ["ktv"],
+    nameOnly: true,
   },
   food: {
     label: "吃饭",
     categories: ["food"],
-    keywords: [],
+    keywords: ["餐厅", "饭", "菜", "粉", "面", "火锅", "烧烤", "烤肉", "小炒", "酒家", "食堂", "饺子", "汉堡", "披萨", "粥", "米粉", "拉面", "快餐", "小馆"],
+    excludeKeywords: ["咖啡", "coffee", "cafe", "奶茶", "茶饮", "饮品", "星巴克", "瑞幸", "库迪", "manner", "奈雪", "喜茶", "霸王茶姬", "益禾堂", "茶百道", "1点点", "蜜雪", "冰淇淋", "蛋糕"],
   },
   hospital: {
     label: "医院",
     categories: ["medical"],
-    keywords: ["医院", "诊所", "门诊", "社康", "卫生", "医疗"],
+    keywords: ["校医院", "大学医院", "人民医院", "南山医院", "综合医院", "医院"],
+    excludeKeywords: ["公交站", "停车场", "诊所", "门诊", "药房", "药店", "口腔", "医疗美容", "心理", "器械", "公司", "中心", "整形美容科", "心电图室", "磁共振室", "体检科", "高压氧舱楼", "眼科医院"],
+    nameOnly: true,
   },
   shopping: {
     label: "购物",
     categories: ["shopping"],
-    keywords: [],
+    keywords: ["购物中心", "购物广场", "大型广场", "大型购物广场", "商场", "商业广场", "购物城", "海岸城", "天虹", "万昌商业广场", "常兴广场", "万象", "来福士"],
+    excludeKeywords: ["超市", "便利", "专卖", "体验店", "旗舰店", "门店"],
+    nameOnly: true,
+    beforeParenthesesOnly: true,
   },
   milkTea: {
     label: "奶茶",
@@ -418,15 +425,23 @@ function renderIntentSearchResults(options = {}) {
 function findIntentPois(intent) {
   const categories = new Set(intent.categories || []);
   const keywords = (intent.keywords || []).map((item) => item.toLowerCase());
+  const excludeKeywords = (intent.excludeKeywords || []).map((item) => item.toLowerCase());
   return state.pois
     .filter((poi) => {
       if (categories.size && !categories.has(poi.category)) {
         return false;
       }
+      const name = String(poi.name || "");
+      const searchableName = intent.beforeParenthesesOnly ? name.split(/[（(]/)[0] : name;
+      const haystack = intent.nameOnly
+        ? searchableName.toLowerCase()
+        : `${searchableName} ${poi.address || ""} ${poi.categoryLabel || ""}`.toLowerCase();
+      if (excludeKeywords.some((keyword) => haystack.includes(keyword))) {
+        return false;
+      }
       if (!keywords.length) {
         return true;
       }
-      const haystack = `${poi.name || ""} ${poi.address || ""} ${poi.categoryLabel || ""}`.toLowerCase();
       return keywords.some((keyword) => haystack.includes(keyword));
     })
     .sort((a, b) => (a.walkDuration || 0) - (b.walkDuration || 0));
