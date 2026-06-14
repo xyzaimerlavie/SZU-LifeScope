@@ -1,20 +1,30 @@
-# 深圳大学 30 分钟生活圈可视化分析网站
+# SZU-LifeScope
 
-这是一个面向 WebGIS 数据可视化课程作业的 Flask + 前端可视化项目。主题为“深圳大学粤海校区宿舍出发 30 分钟生活圈”，通过地图点位、宿舍起点、步行时间、分类筛选和统计图表展示校园周边餐饮、交通、医疗、购物、休闲设施的空间分布。
+深圳大学粤海校区 30 分钟生活圈 WebGIS 可视化分析平台。项目以宿舍生活区为出发点，结合 POI 数据、步行可达性、设施类型筛选和图表分析，展示校园周边餐饮、交通、医疗、购物、休闲等生活服务设施的空间分布。
 
-## 已包含内容
+页面展示名称为 **GeoLifeScope 校园生活圈分析平台**。
 
-- 地图可视化：内置坐标投影地图，可选接入高德地图 JS API；地图中心点使用所选宿舍坐标。
-- 宿舍起点：支持紫薇斋、乔相阁、夏筝三个宿舍位置选择。
-- 数据刷新：页面提供“刷新高德数据”按钮，先从高德采集 POI 并写入 SQLite，再从数据库读取展示。
-- 路径规划：刷新高德数据时会预计算三处宿舍到 POI 的步行路线并写入数据库；普通页面切换只读数据库，避免实时请求卡住。
-- POI 数据：`data/poi_seed.json` 提供初始点位，启动后导入 SQLite。
-- 数据库连接：`data/life_circle.db` 保存设施点位，后端通过 `sqlite3` 查询。
-- 后端接口：Flask 提供 `/api/config`、`/api/pois`、`/api/stats`、`/api/db/info`。
-- 图表分析：ECharts 可用时展示柱状图、环形图、雷达图；网络不可用时自动显示内置条形图。
-- 交互功能：步行时间切换、宿舍选择、设施类型筛选、点位详情、数据库刷新。
+## 功能概览
 
-## 运行方式
+- 宿舍生活圈分析：支持斋区、西南、南区三个宿舍出发点切换。
+- 步行时间筛选：支持 10 至 45 分钟范围内按 5 分钟步长筛选。
+- 设施分类筛选：支持餐饮、交通、医疗、购物、休闲五类 POI。
+- 地图可视化：优先使用高德地图 JS API；没有高德 Key 时使用内置坐标投影地图。
+- 热力图与点位图层：高德地图模式下支持缩放联动，低缩放显示热力图，高缩放显示具体点位。
+- 点位详情：点击地图点位可查看设施名称、分类、步行时间、距离和地址。
+- 意图查询：通过“我要去”选择棋牌、KTV、吃饭、医院、购物、奶茶、运动、咖啡等目的，自动推荐最近点位。
+- 图表分析：展示设施类型数量、步行时间分布和综合便利度雷达图。
+- 路线缓存：高德步行路线可预计算并写入 SQLite，页面交互时优先读取本地缓存。
+
+## 技术栈
+
+- 后端：Python、Flask、SQLite
+- 前端：HTML、CSS、JavaScript
+- 地图：高德地图 JS API，可选
+- 图表：ECharts，可选；加载失败时使用页面内置 fallback 图表
+- 数据：本地示例 POI + 高德 Web 服务 POI
+
+## 快速运行
 
 ```powershell
 cd E:\Finalweb
@@ -23,83 +33,194 @@ python init_db.py
 python app.py
 ```
 
-浏览器打开：
+浏览器访问：
 
 ```text
 http://127.0.0.1:5000
 ```
 
-## 高德地图实时数据配置
+也可以直接双击运行：
 
-没有 Key 时项目也能使用示例数据完整运行。若要接入高德地图和实时 POI，推荐使用本地配置文件。
+```text
+start_server.bat
+```
 
-复制 `config_local.example.py`，改名为 `config_local.py`：
+## 高德地图配置
+
+项目没有高德 Key 也可以运行，会自动使用本地示例数据和内置地图。若要启用真实高德地图、POI 采集和步行路线缓存，请复制配置示例：
+
+```powershell
+copy config_local.example.py config_local.py
+```
+
+然后填写：
 
 ```python
 AMAP_JS_KEY = "你的高德 JS API Key"
-AMAP_WEB_KEY = "你的高德 Web服务 API Key"
+AMAP_WEB_KEY = "你的高德 Web 服务 API Key"
 AMAP_SECURITY_CODE = "你的高德安全密钥，没有可留空"
 ```
 
-`config_local.py` 已加入 `.gitignore`，不要提交或上传。也可以临时使用环境变量：
+`config_local.py` 已加入 `.gitignore`，不会上传到 GitHub。
+
+也可以临时使用环境变量：
 
 ```powershell
 $env:AMAP_JS_KEY="你的高德 JS API Key"
-$env:AMAP_WEB_KEY="你的高德 Web服务 API Key"
+$env:AMAP_WEB_KEY="你的高德 Web 服务 API Key"
 $env:AMAP_SECURITY_CODE="你的高德安全密钥"
 python app.py
 ```
 
-页面默认从数据库读取高德 POI。若数据库还没有高德数据，会自动使用示例 POI 兜底。点击“刷新高德数据”后，后端会围绕紫薇斋、乔相阁、夏筝三处宿舍调用高德周边搜索接口，把 POI 写入 SQLite，并预计算步行路径；之后切换宿舍、分类或时间都只从数据库读取，不再临时请求高德实时数据。
+## 数据说明
 
-## 采集真实 POI 数据
+项目使用两个数据来源：
 
-当前仓库自带的 `poi_seed.json` 是用于课堂演示的本地示例数据。若要把作业数据升级为真实采集数据，申请高德 Web 服务 Key 后运行：
+- `data/poi_seed.json`：本地示例 POI 数据，便于无 Key 时演示。
+- `data/life_circle.db`：运行时生成的 SQLite 数据库，保存高德 POI、数据采集记录和步行路线缓存。
+
+页面读取数据时会优先使用数据库中的高德 POI；如果没有高德 POI，则回退到本地示例数据。
+
+`data/*.db` 已加入 `.gitignore`，数据库不会上传到 GitHub。
+
+## 采集真实 POI
+
+配置 `AMAP_WEB_KEY` 后，可以运行：
 
 ```powershell
 python fetch_amap_pois.py --radius 2000 --pages 2
 ```
 
-脚本会围绕深圳大学粤海校区多个校园锚点调用高德地图 Web服务 API 周边搜索接口，把周边 POI 去重后写入 `data/life_circle.db`。页面会优先读取 `source = 'amap'` 的已采集数据；没有高德数据时才读取示例数据。为了避免坐标系偏移，正式展示建议先点击页面上的“刷新高德数据”。
+也可以通过后端接口刷新数据。刷新流程包括：
 
-采集记录可以通过接口查看：
+1. 围绕校园中心、宿舍区和周边锚点采集高德 POI。
+2. 对 POI 去重后写入 SQLite。
+3. 预计算宿舍到 POI 的步行路线。
+4. 将步行距离、时间和路径写入 `walking_routes` 表。
+
+如只需要补齐已有 POI 的路线缓存，可以运行：
+
+```powershell
+python complete_routes.py
+```
+
+## 便利度指数
+
+便利度指数固定以 30 分钟生活圈作为计算口径，便于比较不同宿舍生活区的综合服务能力。
+
+单个 POI 的贡献值：
 
 ```text
+贡献值 = 1 / (1 + 步行分钟)
+```
+
+分类可达性：
+
+```text
+分类可达性 = Σ 1 / (1 + 步行分钟)
+```
+
+分类分数：
+
+```text
+分类分数 = 100 × (1 - e ^ (-分类可达性 / 6))
+```
+
+综合便利度：
+
+```text
+综合便利度 =
+餐饮分 × 0.25 +
+交通分 × 0.20 +
+医疗分 × 0.20 +
+购物分 × 0.15 +
+休闲分 × 0.20
+```
+
+距离越近、数量越多、类型权重越高的设施，对综合便利度贡献越大。
+
+## API 接口
+
+- `GET /api/config`：返回中心点、宿舍点、分类配置、高德 JS Key 等页面配置。
+- `GET /api/pois`：按宿舍、步行时间和设施类型返回 POI 与统计结果。
+- `GET /api/stats`：返回统计摘要。
+- `GET /api/db/info`：返回数据库记录数量、分类统计和最近数据源记录。
+- `POST /api/refresh-amap`：刷新高德 POI 数据并预计算路线。
+- `POST /api/complete-routes`：补齐步行路线缓存。
+
+常用查询示例：
+
+```text
+http://127.0.0.1:5000/api/pois?minutes=30&dorm=ziwei&categories=food,transport
 http://127.0.0.1:5000/api/db/info
 ```
 
 ## 数据字段
 
-`data/poi_seed.json` 是深圳大学粤海校区周边的初始 POI 数据文件，`data/life_circle.db` 是运行使用的 SQLite 数据库。每个点位包含：
+POI 基础字段：
 
 - `id`：点位编号
 - `name`：设施名称
 - `category`：设施类型，包含 `food`、`transport`、`medical`、`shopping`、`leisure`
-- `address`：地址说明
+- `address`：地址
 - `lng` / `lat`：经纬度
 - `source`：数据来源
 
-数据库表名为 `pois`，字段与 JSON 数据保持一致。可以通过接口查看数据库统计：
+接口返回时会补充：
+
+- `walkDistance`：步行距离，单位为米
+- `walkDuration`：步行时间，单位为秒
+- `walkMinutes`：向上取整后的步行分钟
+- `routeMode`：`amap` 或 `estimate`
+- `routePath`：高德路线折线点
+- `categoryLabel`：分类中文名称
+- `color`：分类颜色
+
+## 项目结构
 
 ```text
-http://127.0.0.1:5000/api/db/info
+E:\Finalweb
+├─ app.py                       # Flask 主程序与 API
+├─ complete_routes.py           # 补齐步行路线缓存脚本
+├─ config.py                    # 配置读取逻辑
+├─ config_local.example.py      # 本地高德 Key 配置示例
+├─ fetch_amap_pois.py           # 高德 POI 采集脚本
+├─ init_db.py                   # 初始化 SQLite 数据库
+├─ requirements.txt             # Python 依赖
+├─ start_server.bat             # Windows 启动脚本
+├─ data
+│  └─ poi_seed.json             # 本地示例 POI
+├─ static
+│  ├─ app.js                    # 前端交互、地图与图表逻辑
+│  ├─ styles.css                # 页面样式
+│  └─ icons
+│     ├─ food.svg
+│     ├─ leisure.svg
+│     ├─ medical.svg
+│     ├─ shopping.svg
+│     └─ transport.svg
+└─ templates
+   └─ index.html                # 页面模板
 ```
 
-## 可用于汇报的课程知识点
+## 可用于课程汇报的知识点
 
-- HTML、CSS、JavaScript 页面开发
-- Flex/Grid 页面布局
-- 地图点位可视化与步行生活圈分析
-- ECharts 图表配置项
-- Flask 后端接口
-- 前后端异步通信
+- WebGIS 页面设计
+- 高德地图 API 接入
+- POI 空间数据采集与清洗
 - SQLite 数据库存储与查询
-- JSON 数据组织与统计分析
+- 步行生活圈与可达性分析
+- 距离衰减可达性指数
+- 热力图与点位图层切换
+- ECharts 图表可视化
+- Flask API 与前后端异步通信
+- 交互式空间查询与最近点推荐
 
-## 分析中心
+## Git 提交说明
 
-- 名称：深圳大学粤海校区宿舍生活圈
-- 地址：深圳市南山区南海大道3688号
-- 宿舍坐标：紫薇斋 `113.939387, 22.533923`；乔相阁 `113.934050, 22.527449`；夏筝 `113.942157, 22.530649`
-- 坐标系说明：上述宿舍坐标来自高德 POI，属于高德地图使用的 GCJ-02 坐标系。
-- 空间判断方式：以所选宿舍为出发点，优先使用高德步行路径规划 API 计算真实步行距离和时间；示例数据或接口失败时使用估算步行距离。
+以下文件不会提交到 GitHub：
+
+- `config_local.py`：本地高德 Key
+- `data/*.db`：运行时数据库
+- `__pycache__/`、`*.pyc`：Python 缓存文件
+- `*.log`：日志文件
