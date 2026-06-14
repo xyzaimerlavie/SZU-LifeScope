@@ -418,7 +418,7 @@ select {
 
 .map-stage {
   position: relative;
-  min-height: clamp(560px, calc(100vh - 120px), 760px);
+  min-height: clamp(440px, calc(100vh - 400px), 520px);
   overflow: hidden;
   border-radius: 8px;
   border: 1px solid var(--line);
