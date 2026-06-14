@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+data/*.db
+config_local.py
+*.log

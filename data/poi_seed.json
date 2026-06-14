@@ -1,0 +1,254 @@
+[
+  {
+    "id": "food-001",
+    "name": "荔山餐厅",
+    "category": "food",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9319,
+    "lat": 22.5400,
+    "source": "seed"
+  },
+  {
+    "id": "food-002",
+    "name": "西南餐厅",
+    "category": "food",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9302,
+    "lat": 22.5368,
+    "source": "seed"
+  },
+  {
+    "id": "food-003",
+    "name": "桂庙新村餐饮街",
+    "category": "food",
+    "address": "南山区桂庙新村",
+    "lng": 113.9322,
+    "lat": 22.5319,
+    "source": "seed"
+  },
+  {
+    "id": "food-004",
+    "name": "南山书城咖啡餐饮区",
+    "category": "food",
+    "address": "南海大道与学府路附近",
+    "lng": 113.9256,
+    "lat": 22.5326,
+    "source": "seed"
+  },
+  {
+    "id": "food-005",
+    "name": "科兴科学园餐饮区",
+    "category": "food",
+    "address": "科技园科苑路附近",
+    "lng": 113.9447,
+    "lat": 22.5441,
+    "source": "seed"
+  },
+  {
+    "id": "food-006",
+    "name": "海岸城餐饮区",
+    "category": "food",
+    "address": "南山区后海商圈",
+    "lng": 113.9416,
+    "lat": 22.5229,
+    "source": "seed"
+  },
+  {
+    "id": "transport-001",
+    "name": "深大地铁站",
+    "category": "transport",
+    "address": "地铁1号线",
+    "lng": 113.9372,
+    "lat": 22.5406,
+    "source": "seed"
+  },
+  {
+    "id": "transport-002",
+    "name": "粤海门地铁站",
+    "category": "transport",
+    "address": "地铁9号线",
+    "lng": 113.9429,
+    "lat": 22.5330,
+    "source": "seed"
+  },
+  {
+    "id": "transport-003",
+    "name": "深大北门公交站",
+    "category": "transport",
+    "address": "南海大道",
+    "lng": 113.9348,
+    "lat": 22.5445,
+    "source": "seed"
+  },
+  {
+    "id": "transport-004",
+    "name": "深圳大学公交站",
+    "category": "transport",
+    "address": "南海大道3688号附近",
+    "lng": 113.9326,
+    "lat": 22.5361,
+    "source": "seed"
+  },
+  {
+    "id": "transport-005",
+    "name": "桃园地铁站",
+    "category": "transport",
+    "address": "地铁1号线",
+    "lng": 113.9251,
+    "lat": 22.5321,
+    "source": "seed"
+  },
+  {
+    "id": "transport-006",
+    "name": "科苑地铁站",
+    "category": "transport",
+    "address": "地铁2号线",
+    "lng": 113.9475,
+    "lat": 22.5394,
+    "source": "seed"
+  },
+  {
+    "id": "medical-001",
+    "name": "深圳大学校医院",
+    "category": "medical",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9308,
+    "lat": 22.5422,
+    "source": "seed"
+  },
+  {
+    "id": "medical-002",
+    "name": "深圳市南山区人民医院",
+    "category": "medical",
+    "address": "桃园路89号附近",
+    "lng": 113.9303,
+    "lat": 22.5278,
+    "source": "seed"
+  },
+  {
+    "id": "medical-003",
+    "name": "粤海街道社区健康服务中心",
+    "category": "medical",
+    "address": "粤海街道片区",
+    "lng": 113.9419,
+    "lat": 22.5366,
+    "source": "seed"
+  },
+  {
+    "id": "medical-004",
+    "name": "桂庙社区健康服务站",
+    "category": "medical",
+    "address": "桂庙新村附近",
+    "lng": 113.9320,
+    "lat": 22.5301,
+    "source": "seed"
+  },
+  {
+    "id": "medical-005",
+    "name": "科技园药房服务点",
+    "category": "medical",
+    "address": "科技园中区",
+    "lng": 113.9466,
+    "lat": 22.5433,
+    "source": "seed"
+  },
+  {
+    "id": "shopping-001",
+    "name": "南山书城",
+    "category": "shopping",
+    "address": "南山区南海大道附近",
+    "lng": 113.9254,
+    "lat": 22.5328,
+    "source": "seed"
+  },
+  {
+    "id": "shopping-002",
+    "name": "校园便利店",
+    "category": "shopping",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9328,
+    "lat": 22.5381,
+    "source": "seed"
+  },
+  {
+    "id": "shopping-003",
+    "name": "腾讯滨海大厦商业配套",
+    "category": "shopping",
+    "address": "滨海大道与科苑南路附近",
+    "lng": 113.9441,
+    "lat": 22.5254,
+    "source": "seed"
+  },
+  {
+    "id": "shopping-004",
+    "name": "来福士广场",
+    "category": "shopping",
+    "address": "南山区南海大道",
+    "lng": 113.9242,
+    "lat": 22.5189,
+    "source": "seed"
+  },
+  {
+    "id": "shopping-005",
+    "name": "海岸城购物中心",
+    "category": "shopping",
+    "address": "文心五路33号附近",
+    "lng": 113.9418,
+    "lat": 22.5224,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-001",
+    "name": "深圳大学演会中心",
+    "category": "leisure",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9349,
+    "lat": 22.5401,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-002",
+    "name": "深圳大学图书馆",
+    "category": "leisure",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9332,
+    "lat": 22.5415,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-003",
+    "name": "深圳大学体育场",
+    "category": "leisure",
+    "address": "深圳大学粤海校区内",
+    "lng": 113.9292,
+    "lat": 22.5396,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-004",
+    "name": "南山文体中心",
+    "category": "leisure",
+    "address": "南山区南山大道",
+    "lng": 113.9239,
+    "lat": 22.5324,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-005",
+    "name": "深圳湾体育中心",
+    "category": "leisure",
+    "address": "滨海大道3001号附近",
+    "lng": 113.9474,
+    "lat": 22.5268,
+    "source": "seed"
+  },
+  {
+    "id": "leisure-006",
+    "name": "荔香公园",
+    "category": "leisure",
+    "address": "南山区南光路",
+    "lng": 113.9253,
+    "lat": 22.5349,
+    "source": "seed"
+  }
+]

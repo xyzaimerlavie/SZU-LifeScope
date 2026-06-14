@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>深圳大学 30 分钟生活圈可视化分析</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=20260614u">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <header class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <p>GeoLifeScope</p>
+            <h1>校园生活圈分析平台</h1>
+          </div>
+        </header>
+
+        <section class="panel compact">
+          <div class="panel-title">
+            <span>分析中心</span>
+            <strong id="centerName">加载中</strong>
+          </div>
+          <p id="centerAddress" class="muted">-</p>
+          <div class="source-row">
+            <label for="dormSelect">宿舍</label>
+            <select id="dormSelect"></select>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>步行时间</span>
+            <strong id="radiusLabel">30min</strong>
+          </div>
+          <input id="radiusRange" type="range" min="10" max="45" step="5" value="30">
+          <div class="ticks">
+            <span>10min</span>
+            <span>20min</span>
+            <span>30min</span>
+            <span>45min</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>设施类型</span>
+            <button id="toggleAllBtn" class="ghost-button" type="button">全选</button>
+          </div>
+          <div id="categoryFilters" class="filter-grid"></div>
+        </section>
+
+        <section class="score-card">
+          <span>便利度指数</span>
+          <strong id="scoreValue">--</strong>
+          <small id="scoreCaption">步行圈内综合服务能力</small>
+        </section>
+
+        <section class="panel intent-panel">
+          <div class="panel-title">
+            <span>我要去</span>
+          </div>
+          <select id="intentSelect">
+            <option value="">选择目的</option>
+            <option value="chess">棋牌</option>
+            <option value="ktv">KTV</option>
+            <option value="food">吃饭</option>
+            <option value="hospital">医院</option>
+            <option value="shopping">购物</option>
+            <option value="milkTea">奶茶</option>
+            <option value="sports">运动</option>
+            <option value="coffee">咖啡</option>
+          </select>
+          <div id="intentResults" class="intent-results">
+            <div class="nearest-empty">选择目的后显示最近点位</div>
+          </div>
+        </section>
+
+        <section class="panel status-panel">
+          <div class="panel-title">
+            <span>生活圈状态</span>
+            <strong id="statusWindow">30min</strong>
+          </div>
+          <div class="status-grid">
+            <div>
+              <span>宿舍起点</span>
+              <strong id="statusDorm">-</strong>
+            </div>
+            <div>
+              <span>数据来源</span>
+              <strong id="statusSource">-</strong>
+            </div>
+            <div>
+              <span>路线算法</span>
+              <strong id="statusRoute">-</strong>
+            </div>
+            <div>
+              <span>覆盖点位</span>
+              <strong id="statusCount">0</strong>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="topbar">
+          <div>
+            <p id="dataBadge">高德 POI 数据 · 30min 步行可达性分析</p>
+            <h2>深圳大学粤海校区 30 分钟生活圈可视化分析</h2>
+          </div>
+          <div class="kpi-row">
+            <div>
+              <span>设施总量</span>
+              <strong id="totalCount">0</strong>
+            </div>
+            <div>
+              <span>覆盖类型</span>
+              <strong id="typeCount">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-stage">
+          <div id="amapContainer" class="amap-container"></div>
+          <div id="fallbackMap" class="fallback-map" aria-label="坐标投影地图">
+            <div class="map-grid"></div>
+            <div class="road road-main"></div>
+            <div class="road road-cross"></div>
+            <div class="road road-ring"></div>
+            <div id="radiusCircle" class="radius-circle"></div>
+            <div id="fallbackPoints" class="fallback-points"></div>
+            <div id="fallbackCenterPin" class="center-pin fallback-center-pin">
+              <span></span>
+              <strong>中心点</strong>
+            </div>
+            <div class="map-label north">南山科技园</div>
+            <div class="map-label east">粤海门</div>
+            <div class="map-label south">桂庙</div>
+          </div>
+          <aside id="mapPoiCard" class="map-poi-card">
+            <div>
+              <span>点位详情</span>
+              <div class="map-poi-actions">
+                <span id="mapPoiTypeIcon" class="category-icon map-poi-type-icon" aria-hidden="true">
+                  <span></span>
+                </span>
+                <strong id="mapPoiDistance">-</strong>
+              </div>
+            </div>
+            <h3 id="mapPoiName">选择地图点位</h3>
+            <p id="mapPoiMeta">点击地图上的彩色点位查看设施信息。</p>
+          </aside>
+        </div>
+
+        <section class="analytics-grid">
+          <div class="chart-panel wide">
+            <div class="chart-head">
+              <h3>设施类型数量</h3>
+              <span id="categoryNote">-</span>
+            </div>
+            <div id="categoryChart" class="chart"></div>
+            <div id="categoryFallback" class="fallback-chart"></div>
+            <div class="nearest-list" id="categoryNearestList">
+              <div class="nearest-empty">待选择设施类型</div>
+            </div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-head">
+              <h3>步行时间分布</h3>
+              <span>由近到远</span>
+            </div>
+            <div id="ringChart" class="chart"></div>
+            <div id="ringFallback" class="fallback-chart"></div>
+            <div class="time-list" id="timeReachableList">
+              <div class="nearest-empty">待选择时间段</div>
+            </div>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-head">
+              <h3>便利度雷达</h3>
+              <span>0-100</span>
+            </div>
+            <div id="radarChart" class="chart"></div>
+            <div id="radarFallback" class="fallback-chart"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}?v=20260614i"></script>
+  </body>
+</html>
