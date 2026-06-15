@@ -496,6 +496,83 @@ def summarize(pois, max_minutes, categories=None, score_pois=None):
     }
 
 
+def average_walk_minutes(pois):
+    if not pois:
+        return 0
+    return round(sum(poi["walkDuration"] for poi in pois) / len(pois) / 60, 1)
+
+
+def dorm_comparison_summary(minutes_options, categories):
+    if has_amap_pois():
+        raw_pois = load_db_pois("amap")
+        source = "amap_saved"
+        use_amap_routes = True
+        require_amap_routes = True
+    else:
+        raw_pois = load_db_pois("seed")
+        source = "sample"
+        use_amap_routes = False
+        require_amap_routes = False
+
+    selected = categories or list(CATEGORIES.keys())
+    rows = []
+    for dorm in DORMS.values():
+        for minutes in minutes_options:
+            filtered = filter_pois(
+                raw_pois,
+                minutes,
+                selected,
+                dorm,
+                use_amap_routes,
+                require_amap_routes,
+            )
+            score_pois = (
+                filtered
+                if minutes == DEFAULT_WALK_MINUTES
+                else filter_pois(
+                    raw_pois,
+                    DEFAULT_WALK_MINUTES,
+                    selected,
+                    dorm,
+                    use_amap_routes,
+                    require_amap_routes,
+                )
+            )
+            stats = summarize(filtered, minutes, selected, score_pois)
+            rows.append(
+                {
+                    "dormId": dorm["id"],
+                    "dormName": dorm["name"],
+                    "minutes": minutes,
+                    "total": stats["total"],
+                    "convenienceScore": stats["convenienceScore"],
+                    "avgMinutes": average_walk_minutes(filtered),
+                    "byCategory": {
+                        item["key"]: {
+                            "count": item["count"],
+                            "avgMinutes": item["avgMinutes"],
+                            "avgDistance": item["avgDistance"],
+                        }
+                        for item in stats["byCategory"]
+                    },
+                }
+            )
+
+    return {
+        "source": source,
+        "minutes": minutes_options,
+        "dorms": [
+            {"id": dorm["id"], "name": dorm["name"], "address": dorm["address"]}
+            for dorm in DORMS.values()
+        ],
+        "categories": [
+            {"key": key, "label": CATEGORIES[key]["label"], "color": CATEGORIES[key]["color"]}
+            for key in selected
+        ],
+        "rows": rows,
+    }
+
+
 def is_in_any_dorm_life_circle(poi, max_line_distance):
     return any(
         haversine_meters(dorm["lng"], dorm["lat"], poi["lng"], poi["lat"]) <= max_line_distance
@@ -880,6 +957,25 @@ def stats():
             else filter_pois(raw_pois, DEFAULT_WALK_MINUTES, categories, dorm)
         )
     return jsonify(summarize(filtered, minutes, categories, score_filtered))
+
+
+@app.route("/api/dorm-comparison")
+def dorm_comparison():
+    categories_arg = request.args.get("categories", "")
+    categories = [item for item in categories_arg.split(",") if item in CATEGORIES]
+    minutes_arg = request.args.get("minutes", "")
+    minutes_options = []
+    for item in minutes_arg.split(","):
+        if not item:
+            continue
+        try:
+            minutes_options.append(max(5, min(int(item), 60)))
+        except ValueError:
+            continue
+    if not minutes_options:
+        minutes_options = [10, 20, 30, 45]
+    minutes_options = list(dict.fromkeys(minutes_options))
+    return jsonify(dorm_comparison_summary(minutes_options, categories))
 
 
 if __name__ == "__main__":

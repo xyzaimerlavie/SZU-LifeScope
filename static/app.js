@@ -8,6 +8,7 @@ const state = {
   minutes: 30,
   pois: [],
   stats: null,
+  comparison: null,
   activePoiId: null,
   selectedNearestCategoryKey: null,
   selectedTimeRingIndex: null,
@@ -27,6 +28,7 @@ const state = {
     category: null,
     ring: null,
     radar: null,
+    comparison: null,
   },
 };
 
@@ -119,6 +121,12 @@ const els = {
   ringFallback: document.querySelector("#ringFallback"),
   timeReachableList: document.querySelector("#timeReachableList"),
   radarFallback: document.querySelector("#radarFallback"),
+  comparisonNote: document.querySelector("#comparisonNote"),
+  comparisonHighlights: document.querySelector("#comparisonHighlights"),
+  comparisonChart: document.querySelector("#comparisonChart"),
+  comparisonFallback: document.querySelector("#comparisonFallback"),
+  comparisonMatrix: document.querySelector("#comparisonMatrix"),
+  comparisonTable: document.querySelector("#comparisonTable"),
 };
 
 async function fetchJson(url, options = {}) {
@@ -309,10 +317,18 @@ async function refreshData() {
     categories,
     dorm: state.selectedDormId,
   });
-  const payload = await fetchJson(`/api/pois?${query.toString()}`);
+  const comparisonQuery = new URLSearchParams({
+    minutes: "10,20,30,45",
+    categories,
+  });
+  const [payload, comparison] = await Promise.all([
+    fetchJson(`/api/pois?${query.toString()}`),
+    fetchJson(`/api/dorm-comparison?${comparisonQuery.toString()}`),
+  ]);
   state.center = payload.center;
   state.pois = payload.pois;
   state.stats = payload.stats;
+  state.comparison = comparison;
   state.activePoiId = null;
   if (Number.isInteger(state.selectedTimeRingIndex) && !state.stats.rings[state.selectedTimeRingIndex]) {
     state.selectedTimeRingIndex = null;
@@ -322,6 +338,7 @@ async function refreshData() {
   renderSummary(payload.source);
   renderMap();
   renderCharts();
+  renderComparison();
   renderNearestPoisList();
   renderTimeReachableList();
   resetPoiDetail();
@@ -829,6 +846,9 @@ function initCharts() {
   state.charts.category = window.echarts.init(document.querySelector("#categoryChart"));
   state.charts.ring = window.echarts.init(document.querySelector("#ringChart"));
   state.charts.radar = window.echarts.init(document.querySelector("#radarChart"));
+  if (els.comparisonChart) {
+    state.charts.comparison = window.echarts.init(els.comparisonChart);
+  }
   state.charts.category.on("click", (params) => {
     const item = state.stats?.byCategory?.[params.dataIndex];
     if (item) {
@@ -853,6 +873,193 @@ function renderCharts() {
   renderCategoryChart();
   renderRingChart();
   renderRadarChart();
+}
+
+function renderComparison() {
+  if (!state.comparison) return;
+  renderComparisonHighlights();
+  renderComparisonMatrix();
+  renderComparisonTable();
+  renderComparisonFallback();
+  if (state.charts.comparison) {
+    renderComparisonChart();
+  }
+}
+
+function getComparisonWindow() {
+  const minutes = state.comparison?.minutes || [];
+  if (!minutes.length) return state.minutes;
+  if (minutes.includes(state.minutes)) return state.minutes;
+  return minutes.reduce((best, item) => (
+    Math.abs(item - state.minutes) < Math.abs(best - state.minutes) ? item : best
+  ), minutes[0]);
+}
+
+function getComparisonRowsForWindow() {
+  const windowMinutes = getComparisonWindow();
+  return (state.comparison?.rows || []).filter((row) => row.minutes === windowMinutes);
+}
+
+function renderComparisonChart() {
+  const comparison = state.comparison;
+  const minutes = comparison.minutes || [];
+  const dorms = comparison.dorms || [];
+  state.charts.comparison.setOption({
+    grid: { left: 38, right: 18, top: 28, bottom: 34 },
+    tooltip: { trigger: "axis" },
+    legend: {
+      top: 0,
+      right: 0,
+      textStyle: { color: "#69747c" },
+    },
+    xAxis: {
+      type: "category",
+      data: minutes.map((item) => `${item}min`),
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: "#dce3df" } },
+      axisLabel: { color: "#69747c" },
+    },
+    yAxis: {
+      type: "value",
+      max: 100,
+      splitLine: { lineStyle: { color: "#eef3ef" } },
+      axisLabel: { color: "#69747c" },
+    },
+    series: dorms.map((dorm, index) => ({
+      name: dorm.name,
+      type: "bar",
+      barMaxWidth: 24,
+      data: minutes.map((minute) => {
+        const row = comparison.rows.find((item) => item.dormId === dorm.id && item.minutes === minute);
+        return row ? row.convenienceScore : 0;
+      }),
+      itemStyle: {
+        color: ["#0f9d7a", "#2f80ed", "#e85d3f"][index % 3],
+        borderRadius: [5, 5, 0, 0],
+      },
+    })),
+  });
+}
+
+function renderComparisonHighlights() {
+  const rows = getComparisonRowsForWindow();
+  const windowMinutes = getComparisonWindow();
+  if (!rows.length) {
+    els.comparisonHighlights.innerHTML = "";
+    return;
+  }
+  const bestScore = [...rows].sort((a, b) => b.convenienceScore - a.convenienceScore)[0];
+  const fastest = [...rows]
+    .filter((row) => row.avgMinutes > 0)
+    .sort((a, b) => a.avgMinutes - b.avgMinutes)[0] || rows[0];
+  const richest = [...rows].sort((a, b) => b.total - a.total)[0];
+  els.comparisonNote.textContent = "";
+  els.comparisonHighlights.innerHTML = [
+    comparisonHighlightCard("便利度最高", bestScore.dormName, bestScore.convenienceScore, "分"),
+    comparisonHighlightCard("平均步行最短", fastest.dormName, fastest.avgMinutes, "min"),
+    comparisonHighlightCard("设施覆盖最多", richest.dormName, richest.total, "处"),
+  ].join("");
+}
+
+function comparisonHighlightCard(label, dormName, value, unit) {
+  return `
+    <div class="comparison-highlight-card">
+      <span>${label}</span>
+      <strong>${escapeHtml(dormName)}</strong>
+      <small>${value}${unit}</small>
+    </div>
+  `;
+}
+
+function renderComparisonMatrix() {
+  const rows = getComparisonRowsForWindow();
+  const categories = state.comparison?.categories || [];
+  if (!rows.length || !categories.length) {
+    els.comparisonMatrix.innerHTML = `<div class="nearest-empty">暂无对比数据</div>`;
+    return;
+  }
+  const maxCount = Math.max(
+    1,
+    ...rows.flatMap((row) => categories.map((category) => row.byCategory?.[category.key]?.count || 0))
+  );
+  const fastestByCategory = Object.fromEntries(
+    categories.map((category) => {
+      const values = rows
+        .map((row) => row.byCategory?.[category.key]?.avgMinutes || 0)
+        .filter((value) => value > 0);
+      return [category.key, values.length ? Math.min(...values) : 0];
+    })
+  );
+  els.comparisonMatrix.innerHTML = `
+    <div class="comparison-matrix-title">
+      <span>${getComparisonWindow()}min 各类设施数量</span>
+    </div>
+    <div class="matrix-grid" style="--category-columns:${categories.length}">
+      <div class="matrix-head">宿舍</div>
+      ${categories.map((category) => `<div class="matrix-head">${escapeHtml(category.label)}</div>`).join("")}
+      ${rows.map((row) => comparisonMatrixRow(row, categories, maxCount, fastestByCategory)).join("")}
+    </div>
+  `;
+}
+
+function comparisonMatrixRow(row, categories, maxCount, fastestByCategory) {
+  return `
+    <div class="matrix-dorm">${escapeHtml(row.dormName)}</div>
+    ${categories.map((category) => {
+      const count = row.byCategory?.[category.key]?.count || 0;
+      const avg = row.byCategory?.[category.key]?.avgMinutes || 0;
+      const isFastest = avg > 0 && avg === fastestByCategory[category.key];
+      const opacity = 0.12 + (count / maxCount) * 0.72;
+      return `
+        <div class="matrix-cell" style="background:${hexToRgba(category.color, opacity)}">
+          <strong>${count}</strong>
+          <span class="${isFastest ? "is-fastest" : ""}">${avg ? `${avg}min` : "-"}</span>
+        </div>
+      `;
+    }).join("")}
+  `;
+}
+
+function renderComparisonTable() {
+  const rows = getComparisonRowsForWindow();
+  const categories = state.comparison?.categories || [];
+  if (!rows.length) {
+    els.comparisonTable.innerHTML = "";
+    return;
+  }
+  els.comparisonTable.innerHTML = `
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>宿舍</th>
+          <th>设施总量</th>
+          <th>便利度</th>
+          <th>平均步行</th>
+          ${categories.map((category) => `<th>${escapeHtml(category.label)}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row) => `
+          <tr>
+            <td>${escapeHtml(row.dormName)}</td>
+            <td>${row.total}</td>
+            <td>${row.convenienceScore}</td>
+            <td>${row.avgMinutes || "-"}min</td>
+            ${categories.map((category) => `<td>${row.byCategory?.[category.key]?.count || 0}</td>`).join("")}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderComparisonFallback() {
+  if (!els.comparisonFallback || !state.comparison) return;
+  const rows = state.comparison.rows || [];
+  const maxScore = Math.max(1, ...rows.map((row) => row.convenienceScore));
+  els.comparisonFallback.innerHTML = rows
+    .map((row) => barRow(`${row.dormName} ${row.minutes}m`, row.convenienceScore, maxScore, "#0f9d7a"))
+    .join("");
 }
 
 function renderCategoryChart() {
@@ -1183,6 +1390,18 @@ function escapeHtml(value) {
 
 function ringColor(index) {
   return ["#0f9d7a", "#2f80ed", "#d69b13", "#e85d3f"][index % 4];
+}
+
+function hexToRgba(hex, opacity) {
+  const normalized = String(hex || "#0f9d7a").replace("#", "");
+  const value = normalized.length === 3
+    ? normalized.split("").map((item) => item + item).join("")
+    : normalized.padEnd(6, "0").slice(0, 6);
+  const number = Number.parseInt(value, 16);
+  const red = (number >> 16) & 255;
+  const green = (number >> 8) & 255;
+  const blue = number & 255;
+  return `rgba(${red}, ${green}, ${blue}, ${clamp(opacity, 0, 1)})`;
 }
 
 boot().catch((error) => {
